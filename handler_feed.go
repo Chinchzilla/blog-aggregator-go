@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Chinchzilla/blog-aggregator-go/internal/database"
+	"github.com/Chinchzilla/gator/internal/database"
 	"github.com/google/uuid"
 )
 

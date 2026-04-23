@@ -1,4 +1,4 @@
-module github.com/Chinchzilla/blog-aggregator-go
+module github.com/Chinchzilla/gator
 
 go 1.26.1
 

@@ -1,28 +1,34 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"net/url"
-	"strings"
+	"os"
+	"os/signal"
+	"time"
 )
 
 func handlerAggregate(state *state, cmd command) error {
-	providedUrl := "https://www.wagslane.dev/index.xml"
-	if len(cmd.args) > 0 {
-		providedUrl = strings.TrimSpace(cmd.args[0])
+	if len(cmd.args) < 1 {
+		return fmt.Errorf("Usage: agg <time_between_requests>")
 	}
 
-	parsedUrl, err := url.Parse(strings.TrimSpace(providedUrl))
+	timeBetweenRequests, err := time.ParseDuration(cmd.args[0])
 	if err != nil {
-		return fmt.Errorf("Invalid url: %w", err)
+		return fmt.Errorf("Invalid duration: %w", err)
+	}
+	ticker := time.NewTicker(timeBetweenRequests)
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+
+	fmt.Println("Collecting feeds every:", timeBetweenRequests.String())
+	for ; ; <-ticker.C {
+		select {
+		case <-ticker.C:
+			scrapeFeed(state)
+		case <-quit:
+			ticker.Stop()
+			return nil
+		}
 	}
 
-	feed, err := fetchFeed(context.Background(), parsedUrl.String())
-	if err != nil {
-		return fmt.Errorf("Failed to fetch feed: %w", err)
-	}
-	fmt.Printf("Feed:\n%+v\n", feed)
-
-	return nil
 }

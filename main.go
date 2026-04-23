@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Chinchzilla/blog-aggregator-go/internal/config"
-	"github.com/Chinchzilla/blog-aggregator-go/internal/database"
+	"github.com/Chinchzilla/gator/internal/config"
+	"github.com/Chinchzilla/gator/internal/database"
 	_ "github.com/lib/pq"
 )
 
@@ -67,4 +67,6 @@ func initCommands(commands *commands) {
 	commands.register("feeds", handlerFeeds)
 	commands.register("follow", middlewareLoggedIn(handlerFollow))
 	commands.register("following", middlewareLoggedIn(handlerFollowing))
+	commands.register("unfollow", middlewareLoggedIn(handlerUnfollow))
+	commands.register("browse", handlerBrowse)
 }

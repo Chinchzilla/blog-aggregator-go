@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 
-	"github.com/Chinchzilla/blog-aggregator-go/internal/config"
-	"github.com/Chinchzilla/blog-aggregator-go/internal/database"
+	"github.com/Chinchzilla/gator/internal/config"
+	"github.com/Chinchzilla/gator/internal/database"
 )
 
 type state struct {

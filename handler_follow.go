@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Chinchzilla/blog-aggregator-go/internal/database"
+	"github.com/Chinchzilla/gator/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -60,6 +60,35 @@ func handlerFollowing(state *state, cmd command, user database.User) error {
 			fmt.Println()
 		}
 	}
+
+	return nil
+}
+
+func handlerUnfollow(state *state, cmd command, user database.User) error {
+	if len(cmd.args) < 1 {
+		return fmt.Errorf("no feed URL provided")
+	}
+
+	parseUrl, err := url.Parse(strings.TrimSpace(cmd.args[0]))
+	if err != nil {
+		return err
+	}
+
+	feed, err := state.db.GetFeedByUrl(context.Background(), parseUrl.String())
+	if err != nil {
+		return err
+	}
+
+	err = state.db.DeleteFeedFollow(context.Background(), database.DeleteFeedFollowParams{
+		FeedID: feed.ID,
+		UserID: user.ID,
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Unfollowed", feed.Name)
+	fmt.Println("URL:", feed.Url)
 
 	return nil
 }

@@ -2,10 +2,17 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/xml"
 	"html"
 	"io"
+	"log"
 	"net/http"
+	"strings"
+	"time"
+
+	"github.com/Chinchzilla/gator/internal/database"
+	"github.com/google/uuid"
 )
 
 type RSSFeed struct {
@@ -57,4 +64,42 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	}
 
 	return &feed, nil
+}
+
+func scrapeFeed(state *state) error {
+	feedToFetch, err := state.db.GetNextFeedToFetch(context.Background())
+	if err != nil {
+		return err
+	}
+
+	feed, err := fetchFeed(context.Background(), feedToFetch.Url)
+	if err != nil {
+		return err
+	}
+
+	err = state.db.MarkFeedFetched(context.Background(), feedToFetch.ID)
+	if err != nil {
+		return err
+	}
+
+	for _, item := range feed.Channel.Item {
+		_, err = state.db.CreatePost(context.Background(), database.CreatePostParams{
+			ID:          uuid.New(),
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+			Title:       item.Title,
+			Url:         item.Link,
+			Description: sql.NullString{String: item.Description, Valid: true},
+			PublishedAt: sql.NullTime{Time: parseTime(item.PubDate), Valid: true},
+			FeedID:      feedToFetch.ID,
+		})
+		if err != nil {
+			if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+				continue
+			}
+			log.Printf("couldn't create post: %v", err)
+		}
+	}
+
+	return nil
 }
